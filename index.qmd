@@ -1085,9 +1085,9 @@ pre_df <- newdata %>%
   mutate(
     fit_link = pred2$fit,
     se_link  = pred2$se.fit,
-    prob     = plogis(fit_link),                          # predicción punto
-    prob_low = plogis(fit_link - 1.96 * se_link),         # IC 95% inferior
-    prob_high= plogis(fit_link + 1.96 * se_link)          # IC 95% superior
+    prob     = plogis(fit_link),                          
+    prob_low = plogis(fit_link - 1.96 * se_link),         
+    prob_high= plogis(fit_link + 1.96 * se_link)          
   )
 ```
 
