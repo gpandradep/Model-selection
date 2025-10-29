@@ -46,7 +46,7 @@ We tackle complexity by formulating simple hypotheses that can be expressed as m
 
 ## Imagine at least two hypotheses, drivers, or factors that could influence your phenomenon of interest.
 
-::: columns
+::::: columns
 ::: column
 <br><br> <!-- Agrega espacios en blanco -->
 
@@ -60,7 +60,7 @@ We tackle complexity by formulating simple hypotheses that can be expressed as m
 ::: column
 ![](img/confu.jpg)
 :::
-:::
+:::::
 
 # Model selection {.center}
 
@@ -78,7 +78,7 @@ wait a moment........
 
 ## We already know a tool, right?
 
-::: columns
+::::: columns
 ::: column
 <br><br> <!-- Agrega espacios en blanco -->
 
@@ -116,7 +116,7 @@ ggplot2::ggplot(skunk_exp, aes(x= distance, y= skunks))+
 
 Since we have count data, we need to use a generalized linear model (GLM) with a Poisson family.
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
@@ -174,7 +174,7 @@ $$
 
 ## Characteristics of a good model
 
-::: {.columns style="text-align: center"}
+::::: {.columns style="text-align: center"}
 ::: {.column style="vertical-align: baseline"}
 <br><br> <!-- Agrega espacios en blanco -->
 
@@ -186,13 +186,13 @@ Explains the data well while leaving out any unnecessary details.
 
 ![](img/occams.jpeg){fig-align="center"}
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
 ### Approaches to estimating model parsimony {style="text-align: center"}
 
-::: columns
+::::: columns
 ::: {.column style="text-align: center"}
 <br><br> <!-- Agrega espacios en blanco -->
 
@@ -227,7 +227,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x)) +
 
 ![](img/AIC_from.png){fig-align="center"}
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
@@ -241,7 +241,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x)) +
 
 ### One thing in common: Maximum Likelihood Estimation (MLE)
 
-::: columns
+::::: columns
 ::: column
 MLE is a method for finding the set of parameters ($\theta$) that make our observed data *most likely* to occur under a given model.
 
@@ -253,7 +253,7 @@ It assumes that all observations are independent and come from the same probabil
 ::: column
 ![](img/MLE.png){fig-align="center" width="827"} A model with a higher log-likelihood value fits the data better, it's more consistent with what we observed.
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
@@ -356,7 +356,7 @@ Evaluating assumptions in a GLM depends on the type of distribution family. Fort
 
 Is there more or less variation than the model explains?
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
 ```{r}
 #| echo: true
@@ -376,7 +376,7 @@ check_overdispersion(ht_mod1)
 
 ```
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
@@ -384,7 +384,7 @@ check_overdispersion(ht_mod1)
 
 Binomial or count models rarely have normal residuals --- even when the model is good. Fortunately, DHARMa comes to the rescue!
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
 Using Dharma
 
@@ -407,7 +407,7 @@ perf_res
 plot(perf_res)
 ```
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
@@ -730,7 +730,7 @@ aic_mod4 <- glm(occupancy00 ~ PatchCon.stand,
 
 Try to fit the following models
 
--   ::: columns
+-   ::::: columns
     ::: {.column width="50%"}
     -   Food, Cover
 
@@ -758,7 +758,7 @@ Try to fit the following models
 
     -   Constant only
     :::
-    :::
+    :::::
 
 ------------------------------------------------------------------------
 
@@ -1113,7 +1113,7 @@ ggplot(pre_df, aes(x = Food.stand, y = Cover.stand,
 
 # Thanks {style="text-align"}
 
-Source code for this presentation can be found at : <https://gpandradep.github.io/Model-selection/>
+Source code for this presentation can be found at : <https://github.com/gpandradep/Model-selection>
 
 ![](img/deer.jpg){fig-align="center"}
 
