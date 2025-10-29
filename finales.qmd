@@ -1,0 +1,1117 @@
+---
+title: "Introduction to Model Selection in R"
+subtitle: "AIC and hypothesis testing"
+author: 
+ - name: "Gabriel P Andrade Ponce"
+   id: "Postdoctoral Research Associate of Wildlife Management"
+   orcid: 0000-0003-2416-1792
+   email: Gabriel.Andrade@sfasu.edu
+   affiliation:
+    - name: "Postdoctoral Research Associate of Wildlife Management | Arthur Temple College of Forestry and Agriculture"
+format: 
+ revealjs:
+  theme: simple
+  standalone: true
+  embed-resources: true
+  slide-number: true
+  smaller: true
+  center-title-slide: false
+  logo: img/sfalogo.png
+  transition: slide 
+  background-position: center
+  title-slide-attributes: 
+    data-background-image: img/bg.png
+
+revealjs-plugins:
+  - revealjs-text-resizer
+
+   
+editor: visual
+bibliography: references.bib
+---
+
+## Nature is complex
+
+We are interested in understanding the factors and drivers that affect our phenomenon of interest.
+
+![](img/Complexity-image_2.webp)
+
+## How do scientists deal with such complexity?
+
+. . .
+
+We tackle complexity by formulating simple hypotheses that can be expressed as mathematical models.
+
+![](img/island.png)
+
+## Imagine at least two hypotheses, drivers, or factors that could influence your phenomenon of interest.
+
+::: columns
+::: column
+<br><br> <!-- Agrega espacios en blanco -->
+
+#### Are these factors mutually exclusive?
+
+<br><br> <!-- Agrega espacios en blanco -->
+
+#### Which one do you think is more important?
+:::
+
+::: column
+![](img/confu.jpg)
+:::
+:::
+
+# Model selection {.center}
+
+wait a moment........
+
+::: incremental
+-   how do I translate my hypotheses into mathematical models?
+
+-   How can I determine which model provides the best fit to my data?
+:::
+
+## Skunk abundance example
+
+![](img/skunk_h.png){fig-align="center"}
+
+## We already know a tool, right?
+
+::: columns
+::: column
+<br><br> <!-- Agrega espacios en blanco -->
+
+```{r}
+#| echo: false
+b0 <-  2
+b1 <-  2
+
+x <-  runif(40, min = 0, max = 1)
+
+lambda <-  exp(b0 + b1*x)
+
+y <-  rpois(40, lambda = lambda) 
+
+skunk_exp <- data.frame(skunks= y, distance=x)
+```
+
+```{r}
+#| echo: false
+#| fig-width: 4
+#| fig-height: 4
+library(ggplot2)
+ggplot2::ggplot(skunk_exp, aes(x= distance, y= skunks))+
+  geom_smooth(method= lm, se=FALSE, col= "black")+
+  labs(x= "Distance to roads", y= "Number of skuks",
+       title= "Our prediction would be something like this")+
+  theme_bw()
+```
+:::
+
+::: column
+<br><br> <!-- Agrega espacios en blanco -->
+
+### Looks like a job for a regression!
+
+Since we have count data, we need to use a generalized linear model (GLM) with a Poisson family.
+:::
+:::
+
+------------------------------------------------------------------------
+
+The formal notation for a Poisson probability distribution is
+
+$$ N \sim Poisson (\lambda)$$
+
+Using the log link function, we can model $\lambda$
+
+$$ log(\lambda) = \beta_0 + \beta_1*x $$
+
+In our case:
+
+::: incremental
+-   $\lambda=$ Expected or mean number of skunks
+-   $\beta_0=$ The intercept
+-   $\beta_1=$ The slope
+-   $x=$ distance to road values
+:::
+
+------------------------------------------------------------------------
+
+### Now we can do the same for each of the predictions in our hypotheses.
+
+::: incremental
+#### Shelters
+
+-   $$log(\text{Skunks}) = \beta_0 + \beta_1* \text{Number of shelters}  $$
+
+#### Resources and Shelters
+
+-   $$log(\text{Skunks}) = \beta_0 + \beta_1* \text{Number of shelters}+ \beta_2* \text{Resources}$$
+:::
+
+------------------------------------------------------------------------
+
+<br><br> <!-- Agrega espacios en blanco -->
+
+## What about a model that tells me skunk abundance increases with the number of shelters but also depends on resources?
+
+<br><br> <!-- Agrega espacios en blanco -->
+
+$$
+\begin{split}
+\log(\text{Skunks}) = \beta_0 + \beta_1 \times \text{Number of shelters} \\
++ \beta_2 \times \text{Resources} + \beta_3 \times \text{shelters*resource}
+\end{split}
+$$
+
+------------------------------------------------------------------------
+
+### Be careful with specification of the model, because each one tells a different story.
+
+![](img/inter.jpg){fig-align="center"}
+
+## Characteristics of a good model
+
+::: {.columns style="text-align: center"}
+::: {.column style="vertical-align: baseline"}
+<br><br> <!-- Agrega espacios en blanco -->
+
+Explains the data well while leaving out any unnecessary details.
+:::
+
+::: column
+**Parsimony**
+
+![](img/occams.jpeg){fig-align="center"}
+:::
+:::
+
+------------------------------------------------------------------------
+
+### Approaches to estimating model parsimony {style="text-align: center"}
+
+::: columns
+::: {.column style="text-align: center"}
+<br><br> <!-- Agrega espacios en blanco -->
+
+**Null Hypothesis Testing**
+
+```{r}
+
+p <- 0.025
+tail_low <- seq(-4, qnorm(p), 0.01)
+df_tl <- data.frame(x=c(tail_low,qnorm(p)), y =c(dnorm(tail_low),0))
+tail_high <- seq(qnorm(1-p), 4, 0.01)
+df_th <- data.frame(x=c(qnorm(1-p),tail_high), y=c(0,dnorm(tail_high)))
+
+ggplot(data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm) +
+  geom_polygon(data = df_tl, aes(x,y), fill = "#99CCFF") +
+  geom_polygon(data = df_th, aes(x,y), fill = "#99CCFF") +
+  geom_vline(xintercept = qnorm(p), lty = "dashed", lwd = 0.3) +
+  geom_vline(xintercept = qnorm(1-p), lty = "dashed", lwd = 0.3) +
+  annotate(geom = "text", -1.97, 0.1, label = "-1.96", hjust = "right") +
+  annotate(geom = "text", 1.97, 0.1, label = "1.96", hjust = "left") +
+  theme_void() +
+  labs(x="", y="", title = "Null hypothesis testing")+
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size= 30))
+```
+:::
+
+::: {.column style="text-align: center"}
+<br><br> <!-- Agrega espacios en blanco -->
+
+**Information criteria**
+
+![](img/AIC_from.png){fig-align="center"}
+:::
+:::
+
+------------------------------------------------------------------------
+
+### Approaches to estimating model parsimony {style="text-align: center"}
+
+### **Bayesian** {#sec--bayesian style="text-align: center"}
+
+![](img/bruje.png){fig-align="center" width="827"}
+
+------------------------------------------------------------------------
+
+### One thing in common: Maximum Likelihood Estimation (MLE)
+
+::: columns
+::: column
+MLE is a method for finding the set of parameters ($\theta$) that make our observed data *most likely* to occur under a given model.
+
+In other words, we try different parameter values and choose the ones that give the highest probability of observing the data we actually have.
+
+It assumes that all observations are independent and come from the same probability distribution.
+:::
+
+::: column
+![](img/MLE.png){fig-align="center" width="827"} A model with a higher log-likelihood value fits the data better, it's more consistent with what we observed.
+:::
+:::
+
+------------------------------------------------------------------------
+
+### Null hypothesis testing {style="text-align: center"}
+
+![](img/yoda.jpg){fig-align="center" width="900"}
+
+------------------------------------------------------------------------
+
+Suppose we have a series of models representing nested hypotheses
+
+![](img/Hare.png)
+
+------------------------------------------------------------------------
+
+![](img/hareLL.png){fig-align="center"}
+
+To compare nested models, we can use the **Likelihood Ratio Test (LRT)**.
+
+The likelihood ratio is calculated as:
+
+$$
+\lambda= \frac{L_{reduced-model}}{L_{full-model}}
+$$
+
+To make the calculation easier, we often use the test statistic:
+
+$$
+D= -2(ln L_{reduced}-ln L_{full})
+$$
+
+Under the null hypothesis, $D$ is approximately **chi-squared distributed** ($\chi^2$) with degrees of freedom equal to the difference in the number of parameters between the models.
+
+------------------------------------------------------------------------
+
+We will use hare presence--absence data from [@murray2020]
+
+You can download the data directly from here [🐰](https://mslivesfasu-my.sharepoint.com/:x:/g/personal/andradegp_sfasu_edu/EXhmCJ_BZM1GkT5s9UXFgnMB7V39VVAxg-OedGjmnqHR3Q?e=osgpdL)
+
+```{r}
+#| echo: true
+hares <- read.csv("hare.orig.csv")
+
+head(hares)
+```
+
+------------------------------------------------------------------------
+
+We will use a Bernoulli distribution, which models success/failure counts for each trial.
+
+```{r}
+bern <- data.frame(x=Rlab::rbern(100, 0.2))
+
+ggplot(bern, aes(x=x))+
+  geom_histogram( fill= "purple", alpha= 0.6, binwidth = 0.2)+
+  labs(title="A Bernoulli distribution", x= "",
+       y= "Frequency")+
+  theme_minimal()+
+  theme(plot.title =  element_text(hjust = 0.5))
+```
+
+------------------------------------------------------------------------
+
+We can fit a GLM using the glm function:
+
+```{r}
+#| echo: true
+ht_mod1 <- glm(
+  occupancy00 ~ PatchArea.stand + PatchCon.stand + Cover.stand + Food.stand, 
+  family = binomial(),  # specify the distribution
+  data = hares          # specify the dataset
+)
+
+summary(ht_mod1)
+```
+
+------------------------------------------------------------------------
+
+Which in our formal notation would be equivalent to
+
+$$
+\log\left[ \frac { P( \operatorname{occupancy00} = \operatorname{1} ) }{ 1 - P( \operatorname{occupancy00} = \operatorname{1} ) } \right] = \alpha \\+ \beta_{1}(\operatorname{PatchArea.stand}) \\ + \beta_{2}(\operatorname{PatchCon.stand}) \\+ \beta_{3}(\operatorname{Cover.stand}) + \beta_{4}(\operatorname{Food.stand})
+$$
+
+This equation shows the log-odds of hare occupancy as a linear combination of our predictors. Each coefficient represents the change in log-odds associated with a one-unit change in the predictor, holding others constant.
+
+------------------------------------------------------------------------
+
+## First, we need to check some assumptions
+
+Violating these assumptions can invalidate the maximum likelihood test [@zuur2009].
+
+Evaluating assumptions in a GLM depends on the type of distribution family. Fortunately, some packages make this process relatively simple [@DHARMa; @performance].
+
+![](img/Dharma.png){fig-align="center" width="827"}
+
+------------------------------------------------------------------------
+
+### Check for overdispersion
+
+Is there more or less variation than the model explains?
+
+::: columns
+::: {.column width="50%"}
+```{r}
+#| echo: true
+#| fig-align: center
+library(DHARMa)
+
+testOverdispersion(ht_mod1)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: true
+library(performance)
+
+check_overdispersion(ht_mod1)
+
+```
+:::
+:::
+
+------------------------------------------------------------------------
+
+### Test the distributional assumptions
+
+Binomial or count models rarely have normal residuals --- even when the model is good. Fortunately, DHARMa comes to the rescue!
+
+::: columns
+::: {.column width="50%"}
+Using Dharma
+
+```{r}
+#| echo: true
+testUniformity(ht_mod1)
+```
+:::
+
+::: {.column width="50%"}
+Using performance
+
+```{r}
+#| echo: true
+
+library(dplyr)
+perf_res <- check_residuals(ht_mod1)
+perf_res
+
+plot(perf_res)
+```
+:::
+:::
+
+------------------------------------------------------------------------
+
+### Homogeneity of variance (or deviance)e
+
+Important: This test assumes that the deviance is equal across groups or along the residuals.
+
+```{r}
+#| echo: true
+# Test for homogeneity of variance (deviance)
+# Checks whether the spread of residuals is consistent across groups or levels of predictors
+testQuantiles(ht_mod1)
+
+```
+
+------------------------------------------------------------------------
+
+One Cool thing about performance is that we can check all the assumptions at once with the `check_model(ht_mod1)`
+
+```{r}
+check_model(ht_mod1)
+```
+
+------------------------------------------------------------------------
+
+## Now let's move on to the test
+
+We use the `Anova` function to generate a deviance analysis table. When applied to a single model, it compares the variance explained by each predictor to that of a null model.
+
+> H0= There is no difference in the explained variance of the Null model and the one with X independent variable.
+>
+> Ha= The deviancy explained by including X independent variable differs from the Null model.
+
+------------------------------------------------------------------------
+
+```{r}
+#| echo: true
+car::Anova(ht_mod1, type= "II")
+```
+
+------------------------------------------------------------------------
+
+Now let's fit a new model by removing one of the predictors:
+
+```{r}
+#| echo: true
+ht_mod2 <- glm(
+  occupancy00 ~ PatchArea.stand + Cover.stand + Food.stand, 
+  family = binomial(),  # specify the distribution
+  data = hares           # specify the dataset
+)
+
+# Perform deviance analysis
+car::Anova(ht_mod2, type= "II")
+
+
+```
+
+------------------------------------------------------------------------
+
+Now that we have two models --- one full model (ht_mod1) including all predictors, and one reduced model (ht_mod2) with one variable removed --- we can formally test whether the simpler model performs just as well.
+
+We do this using the Likelihood Ratio Test (LRT):
+
+```{r}
+#| echo: true
+anova(ht_mod2, # restricted
+      ht_mod1, # full
+      test = "LRT")
+```
+
+Is this model really better than the one that included all predictors?
+
+If the p-value is small (e.g. \< 0.05), → reject H₀ → the full model is significantly better.
+
+If the p-value is large, → fail to reject H₀ → the reduced model is sufficient.
+
+------------------------------------------------------------------------
+
+Statistically, both methods perform the same Likelihood Ratio Test. The difference is mainly practical anova() is the classical base R approach, while test_likelihoodratio() provides cleaner, more informative output
+
+```{r}
+#| echo: true
+test1 <- test_likelihoodratio(ht_mod2, # Restricted model
+                              ht_mod1, # Full model
+                              estimator = "ML")
+test1
+```
+
+If in practical terms they are the same, which one should we choose?
+
+------------------------------------------------------------------------
+
+Let's continue exploring possible models
+
+```{r}
+#| echo: true
+ht_mod3 <- glm(occupancy00 ~ Cover.stand+ Food.stand, 
+               family = binomial(), # Define the distribution
+               data = hares) # Define dataset
+car::Anova(ht_mod3, type= "II")
+
+```
+
+------------------------------------------------------------------------
+
+Here we are formally comparing two nested models using a Likelihood Ratio Test (LRT):
+
+```{r}
+#| echo: true
+test_likelihoodratio(ht_mod3, 
+                     ht_mod2, estimator = "ML")
+```
+
+------------------------------------------------------------------------
+
+We've now reduced our model to include just one predictor:
+
+```{r}
+#| echo: true
+ht_mod4 <- glm(occupancy00 ~ Food.stand, 
+               family = binomial(), # Define the distribution
+               data = hares) # Define dataset
+car::Anova(ht_mod4, type= "II")
+```
+
+------------------------------------------------------------------------
+
+What happened here?
+
+```{r}
+#| echo: true
+test_likelihoodratio(ht_mod4, 
+                     ht_mod3, estimator = "ML")
+
+```
+
+------------------------------------------------------------------------
+
+### Interpreting the summary output
+
+Let's take a look at the selected model
+
+```{r}
+#| echo: true
+summary(ht_mod3)
+```
+
+------------------------------------------------------------------------
+
+The reports package can helps to do a general report of the model [@report] ( or at least understand a little of what you did 🙃).
+
+```{r}
+#| echo: true
+library(report)
+
+report(ht_mod3)
+
+```
+
+------------------------------------------------------------------------
+
+Of course, before you interpret or report anything from your model, you should evaluate its assumptions.
+
+```{r}
+#| echo: true
+
+# Simulate residuals for the selected model
+residuals_ht_mod3 <- simulateResiduals(ht_mod3)
+
+# Plot the residuals to check model assumptions
+plot(residuals_ht_mod3)
+```
+
+------------------------------------------------------------------------
+
+### Backward selection
+
+Backward selection is a model simplification method where we start with a complex model (including all predictors and interactions) and systematically remove variables one by one, checking at each step whether the model fit is significantly worsened.
+
+```{r}
+#| echo: true
+drop_mod <- glm(occupancy00 ~ (PatchArea.stand+ PatchCon.stand+ Cover.stand+ Food.stand)^2, 
+               family = binomial(), 
+               data = hares)
+```
+
+then we use the `drop1` function
+
+```{r}
+#| echo: true
+drop1(drop_mod, test = "LRT")
+```
+
+------------------------------------------------------------------------
+
+We now create a new model by removing the terms that did not significantly contribute to the model fit. We then use drop1() to test the effect of each remaining term on model deviance.
+
+```{r}
+#| echo: true
+drop_mod1 <- glm(occupancy00 ~ PatchArea.stand+ PatchCon.stand+ Cover.stand+ Food.stand+ PatchArea.stand:PatchCon.stand+PatchArea.stand:Cover.stand+PatchCon.stand:Cover.stand+PatchCon.stand:Food.stand+Cover.stand:Food.stand  , 
+               family = binomial(), 
+               data = hares)
+
+# Evaluate the contribution of each term using likelihood ratio tests
+drop1(drop_mod1, test = "LRT")
+```
+
+------------------------------------------------------------------------
+
+```{r}
+#| echo: true
+#| output: false
+drop_mod2 <- glm(occupancy00 ~ PatchArea.stand+ PatchCon.stand+ Cover.stand+ Food.stand+ PatchArea.stand:PatchCon.stand+ PatchArea.stand:Cover.stand+ PatchCon.stand:Food.stand +Cover.stand:Food.stand , 
+               family = binomial(), 
+               data = hares)
+drop1(drop_mod2, test = "LRT")
+```
+
+```{r}
+#| echo: true
+#| output: false
+drop_mod3 <- glm(occupancy00 ~ PatchArea.stand+ PatchCon.stand+ Cover.stand+ Food.stand+ PatchArea.stand:Cover.stand+ PatchCon.stand:Food.stand +Cover.stand:Food.stand , 
+               family = binomial(), 
+               data = hares)
+drop1(drop_mod3, test = "LRT")
+```
+
+```{r}
+#| echo: true
+#| output: false
+drop_mod4 <- glm(occupancy00 ~ PatchArea.stand+ PatchCon.stand+ Cover.stand+ Food.stand+ PatchArea.stand:Cover.stand+ PatchCon.stand:Food.stand, 
+               family = binomial(), 
+               data = hares)
+drop1(drop_mod4, test = "LRT")
+```
+
+------------------------------------------------------------------------
+
+After the backward selection process, we ended up with the following final model, which includes only the predictors and interactions that significantly contribute to explaining hare occupancy.
+
+```{r}
+#| echo: true
+summary(drop_mod4)
+```
+
+------------------------------------------------------------------------
+
+### Forward selection
+
+We can also perform forward selection, i.e., starting with a simple null model and adding terms one by one. However, forward selection is generally not recommended, because it may overlook important interactions or collinear effects and tends to be less stable than backward selection.
+
+```{r}
+#| echo: true
+add_mod <- glm(occupancy00 ~ 1 , 
+               family = binomial(), 
+               data = hares)
+
+```
+
+then we use the function add1 in which we have to specify which terms we are going to add
+
+```{r}
+#| echo: true
+add1(add_mod , 
+     scope = ~ PatchArea.stand+ PatchCon.stand+ Cover.stand+ Food.stand, 
+     test = "LRT")
+```
+
+------------------------------------------------------------------------
+
+### Akaike information Criteria {style="text-align: center"}
+
+![](img/AIC_homer.png)
+
+------------------------------------------------------------------------
+
+### What is the AIC?
+
+The Akaike Information Criterion (AIC) measures the relative amount of information lost or gained by using a model to represent the data, compared to other models.
+
+$$
+AIC= -2ln(L_{max})+2k)
+$$
+
+Since adding more parameters usually improves the model fit (but can lead to overfitting), the penalty term $2k$ discourages overly complex models. Where $k$ is the number of estimated parameters in the model.
+
+In practice, models with lower AIC values are preferred, as they are expected to lose the least amount of information relative to the "true" model.
+
+------------------------------------------------------------------------
+
+Create a set of candidate models
+
+```{r}
+#| echo: true
+
+#Food
+aic_mod1 <- glm(occupancy00 ~ Food.stand, 
+               family = binomial(), 
+               data = hares)
+#Cover
+
+aic_mod2 <- glm(occupancy00 ~ Cover.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Patch size
+aic_mod3 <- glm(occupancy00 ~ PatchArea.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Patch connectivity
+aic_mod4 <- glm(occupancy00 ~ PatchCon.stand, 
+               family = binomial(), 
+               data = hares)
+
+```
+
+------------------------------------------------------------------------
+
+Try to fit the following models
+
+-   ::: columns
+    ::: {.column width="50%"}
+    -   Food, Cover
+
+    -   Food, Patch size
+
+    -   Food, Patch connectivity
+
+    -   Cover, Patch size
+
+    -   Food, Cover, Patch size
+
+    -   Food, Cover, Patch connectivity
+    :::
+
+    ::: {.column width="50%"}
+    -   Food, Patch size, Patch connectivity
+
+    -   Food, Cover interaction
+
+    -   Food, Patch size interaction
+
+    -   Food, Patch connectivity interaction
+
+    -   Cover, Patch connectivity interaction
+
+    -   Constant only
+    :::
+    :::
+
+------------------------------------------------------------------------
+
+Try to fit the following models
+
+```{r}
+#| echo: true
+
+# Food, Cover
+aic_mod5 <- glm(occupancy00 ~ Food.stand+ Cover.stand, 
+               family = binomial(), 
+               data = hares)
+
+#Food, Patch size
+aic_mod6 <- glm(occupancy00 ~ Food.stand+ PatchArea.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Food, Patch connectivity
+aic_mod7 <- glm(occupancy00 ~ Food.stand+ PatchCon.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Cover, Patch size
+aic_mod8 <- glm(occupancy00 ~ Cover.stand+ PatchArea.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Food, Cover, Patch size
+
+aic_mod9 <- glm(occupancy00 ~ Food.stand+ Cover.stand+ PatchArea.stand, 
+               family = binomial(), 
+               data = hares)
+
+
+# Food, Cover, Patch connectivity
+aic_mod10 <- glm(occupancy00 ~ Food.stand+ Cover.stand+ PatchCon.stand, 
+               family = binomial(), 
+               data = hares)
+```
+
+------------------------------------------------------------------------
+
+Try to fit the following models
+
+```{r}
+#| echo: true
+#Food, Patch size, Patch connectivity
+aic_mod11 <- glm(occupancy00 ~ Food.stand+ PatchArea.stand+ PatchCon.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Food, Cover interaction
+aic_mod12 <- glm(occupancy00 ~ Food.stand*Cover.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Food, Patch size interaction
+aic_mod13 <- glm(occupancy00 ~ Food.stand*PatchArea.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Food, Patch connectivity interaction
+aic_mod14 <- glm(occupancy00 ~ Food.stand*PatchCon.stand, 
+               family = binomial(), 
+               data = hares)
+
+# Cover, Patch connectivity interaction
+aic_mod15 <- glm(occupancy00 ~ Cover.stand*PatchCon.stand, 
+               family = binomial(), 
+               data = hares)
+
+#Constant only
+aic_mod16 <- glm(occupancy00 ~ 1, 
+               family = binomial(), 
+               data = hares)
+```
+
+------------------------------------------------------------------------
+
+To perform model selection using AIC, there are several options and packages available. I particularly like AICcmodavg and its function aictab() for its versatility [@AICcmodavg].
+
+Here, we compare a set of candidate models, including single predictors, additive combinations, and interactions. aictab() calculates AIC for each model, ranks them, and provides differences relative to the best model.
+
+```{r}
+#| echo: true
+library(AICcmodavg)
+
+AICctab <- aictab(list("Food"= aic_mod1,
+                       "Cover"= aic_mod2,
+                       "Patch size"= aic_mod3,
+                       "Patch conectivity"= aic_mod4,
+                       "Food +Cover"= aic_mod5,
+                       "Food +Patch size"= aic_mod6,
+                       "Food +Patch connectivity"= aic_mod7,
+                       "Cover+ Patch size"= aic_mod8,
+                       "Food+ Cover+ Patch size"= aic_mod9,
+                       "Food+ Cover+ Patch connectivity"=  aic_mod10,
+                       "Food+ Patch size+ Patch connectivity"= aic_mod11,
+                       "Food* Cover"= aic_mod12,
+                       "Food* Patch size"= aic_mod13,
+                       "Food* Patch"= aic_mod14,
+                       "Cover* Patch connectivity"= aic_mod15,
+                       "Constant"= aic_mod16),
+                  second.ord = FALSE, # To use AIC
+                  sort = TRUE # Rank the models
+                  )
+```
+
+------------------------------------------------------------------------
+
+```{r}
+#| eval: false
+#| echo: true
+View(AICctab)
+```
+
+```{r}
+AICctab_rounded <- AICctab
+AICctab_rounded[] <- lapply(AICctab_rounded, function(x) {
+  if(is.numeric(x)) round(x, 2) else x
+})
+
+# Mostrar la tabla con DT::datatable()
+DT::datatable(AICctab_rounded)
+
+```
+
+------------------------------------------------------------------------
+
+Another useful option is to use the performance package
+
+```{r}
+#| echo: true
+AIC_performance <- compare_performance(list("Food"= aic_mod1,
+                       "Cover"= aic_mod2,
+                       "Patch size"= aic_mod3,
+                       "Patch conectivity"= aic_mod4,
+                       "Food +Cover"= aic_mod5,
+                       "Food +Patch size"= aic_mod6,
+                       "Food +Patch connectivity"= aic_mod7,
+                       "Cover+ Patch size"= aic_mod8,
+                       "Food+ Cover+ Patch size"= aic_mod9,
+                       "Food+ Cover+ Patch connectivity"=  aic_mod10,
+                       "Food+ Patch size+ Patch connectivity"= aic_mod11,
+                       "Food* Cover"= aic_mod12,
+                       "Food* Patch size"= aic_mod13,
+                       "Food* Patch"= aic_mod14,
+                       "Cover* Patch connectivity"= aic_mod15,
+                       "Constant"= aic_mod16),
+                       metrics = "AIC",
+                       rank = FALSE)
+```
+
+------------------------------------------------------------------------
+
+```{r}
+#| echo: true
+#| eval: false
+
+View(AIC_performance)
+```
+
+```{r}
+AICctab_rounded_per <- AIC_performance
+AICctab_rounded_per[] <- lapply(AICctab_rounded_per, function(x) {
+  if(is.numeric(x)) round(x, 2) else x
+})
+
+# Mostrar la tabla con DT::datatable()
+DT::datatable(AICctab_rounded_per)
+```
+
+------------------------------------------------------------------------
+
+#### The AIC even allows us to compare all possible combinations of models.
+
+![](https://media.tenor.com/2g-q1Tmhq3oAAAAM/it-is-true-the-devil.gif){fig-align="center" width="346"}
+
+------------------------------------------------------------------------
+
+First, we need to fit a **global model** that includes **all predictors** and **possible pairwise interactions**.\
+This global model serves as the starting point for automated model selection using `dredge()`.
+
+Note: Setting `na.action = "na.fail"` is **important** because `dredge()` requires that the model contains **no missing values**.
+
+```{r}
+#| echo: true
+global_mod <- glm(occupancy00 ~ (PatchArea.stand+ PatchCon.stand+ Cover.stand+ Food.stand)^2, 
+               family = binomial(), 
+               data = hares,
+               na.action = "na.fail") # important to dredge
+summary(global_mod )
+```
+
+------------------------------------------------------------------------
+
+Now we can use the `dredge()` function from the **MuMIn** package.\
+This function **fits and ranks all possible combinations of models** based on the structure of the global model.
+
+In this example, we set a **limit of up to 3 variables per model** for simplicity.\
+Be aware that **interpreting models with multiple interactions can quickly become challenging**, so dredging is mostly useful as an **exploratory tool**.
+
+```{r}
+#| echo: true
+library(MuMIn)
+
+dredge <- dredge( global_mod, #Global model
+                  rank = "AIC", # Information criteria
+                  m.lim = c(NA, 3) # Limint interactions 
+                  
+  
+)
+```
+
+------------------------------------------------------------------------
+
+```{r}
+#| echo: true
+#| eval: false
+View(dredge)
+```
+
+```{r}
+# Convertir el objeto dredge a data.frame
+dredge_df <- as.data.frame(dredge)
+
+# Redondear las columnas numéricas a dos decimales
+dredge_rounded <- dredge_df
+dredge_rounded[] <- lapply(dredge_rounded, function(x) {
+  if(is.numeric(x)) round(x, 2) else x
+})
+
+# Mostrar la tabla con DT::datatable()
+DT::datatable(dredge_rounded)
+```
+
+------------------------------------------------------------------------
+
+We can extract the **best models** from the dredge results, for example those with **ΔAIC \< 2**, which are considered essentially equivalent to the top model.\
+
+We can then examine the summary of any selected model.
+
+```{r}
+#| echo: true
+
+# Extract models with ΔAIC < 2 from dredge results
+best_models <- get.models(dredge, subset = delta< 2)
+
+# View the summary of a specific model (e.g., model #20)
+summary(best_models$`20`)
+```
+
+------------------------------------------------------------------------
+
+Finally, we **check the assumptions** of the selected model using simulated residuals.\
+
+This helps ensure that the model provides a valid representation of the data before interpreting or reporting the results.
+
+```{r}
+#| echo: true
+res_best <- simulateResiduals(best_models$`20`)
+
+plot(res_best)
+```
+
+------------------------------------------------------------------------
+
+Different approaches give us slightly different models.
+
+Choose the approach based on your modeling objectives [@tredennick2021].
+
+![](img/modelsel.jpg){fig-align="center"}
+
+------------------------------------------------------------------------
+
+#### Finally, we are going to **generate prediction graphs** using the `ggeffects` package. 
+This allows us to visualize how the predictors influence the probability of hare occupancy based on the selected best model.
+
+```{r}
+#| echo: true
+library(ggeffects)
+
+prediction <- ggpredict(best_models$`20`,
+                        terms = c("Food.stand [all]" , "Cover.stand " ))
+
+prediction
+```
+
+------------------------------------------------------------------------
+
+```{r}
+#| echo: true
+plot(prediction, show_data = TRUE)
+```
+
+------------------------------------------------------------------------
+
+To visualize how detection probability varies across two continuous predictors, we first need to create a new data frame containing all possible combinations of their values. This can be done using the `expand.grid()` function.\
+
+Next, we use the `predict()` function to estimate detection probabilities for each combination based on our fitted model.\
+
+Finally, we arrange these predictions into a data frame that can be plotted as a **heat map**, where each axis represents one variable and the color scale represents the predicted probability.
+
+```{r}
+#| echo: true
+
+newdata <- expand.grid(
+  Food.stand  = seq(min(hares$Food.stand, na.rm = TRUE),
+                 max(hares$Food.stand, na.rm = TRUE),
+                 length.out = 100),
+  Cover.stand = seq(min(hares$Cover.stand, na.rm = TRUE),
+                 max(hares$Cover.stand, na.rm = TRUE),
+                 length.out = 100)
+)
+
+
+pred2 <- predict(best_models$`20`, 
+                 newdata = newdata, 
+                 type = "link", se.fit = TRUE)
+
+pre_df <- newdata %>%
+  mutate(
+    fit_link = pred2$fit,
+    se_link  = pred2$se.fit,
+    prob     = plogis(fit_link),                          # predicción punto
+    prob_low = plogis(fit_link - 1.96 * se_link),         # IC 95% inferior
+    prob_high= plogis(fit_link + 1.96 * se_link)          # IC 95% superior
+  )
+```
+
+------------------------------------------------------------------------
+
+```{r}
+#| echo: true
+ggplot(pre_df, aes(x = Food.stand, y = Cover.stand, 
+                   fill = prob)) +
+  geom_raster() +                                  
+  scale_fill_viridis_c(name = "Occupancy\nprobability", 
+                       option = "viridis", direction = -1) +
+  geom_contour(aes(z = prob), colour = "white", 
+               alpha = 0.5, bins = 8) + 
+  labs(x = "Food availability", y = "Cover", 
+       title = "Predicted occupancy probability") +
+  coord_fixed() +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+------------------------------------------------------------------------
+
+# Thanks {style="text-align"}
+
+![](img/deer.jpg){fig-align="center"}
+
+------------------------------------------------------------------------
