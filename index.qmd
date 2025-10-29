@@ -1113,6 +1113,8 @@ ggplot(pre_df, aes(x = Food.stand, y = Cover.stand,
 
 # Thanks {style="text-align"}
 
+Source code for this presentation can be found at : <https://gpandradep.github.io/Model-selection/>
+
 ![](img/deer.jpg){fig-align="center"}
 
 ------------------------------------------------------------------------
