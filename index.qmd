@@ -67,9 +67,9 @@ We tackle complexity by formulating simple hypotheses that can be expressed as m
 wait a moment........
 
 ::: incremental
--   how do I translate my hypotheses into mathematical models?
+- how do I translate my hypotheses into mathematical models?
 
--   How can I determine which model provides the best fit to my data?
+- How can I determine which model provides the best fit to my data?
 :::
 
 ## Skunk abundance example
@@ -131,10 +131,10 @@ $$ log(\lambda) = \beta_0 + \beta_1*x $$
 In our case:
 
 ::: incremental
--   $\lambda=$ Expected or mean number of skunks
--   $\beta_0=$ The intercept
--   $\beta_1=$ The slope
--   $x=$ distance to road values
+- $\lambda=$ Expected or mean number of skunks
+- $\beta_0=$ The intercept
+- $\beta_1=$ The slope
+- $x=$ distance to road values
 :::
 
 ------------------------------------------------------------------------
@@ -144,11 +144,11 @@ In our case:
 ::: incremental
 #### Shelters
 
--   $$log(\text{Skunks}) = \beta_0 + \beta_1* \text{Number of shelters}  $$
+- $$log(\text{Skunks}) = \beta_0 + \beta_1* \text{Number of shelters}  $$
 
 #### Resources and Shelters
 
--   $$log(\text{Skunks}) = \beta_0 + \beta_1* \text{Number of shelters}+ \beta_2* \text{Resources}$$
+- $$log(\text{Skunks}) = \beta_0 + \beta_1* \text{Number of shelters}+ \beta_2* \text{Resources}$$
 :::
 
 ------------------------------------------------------------------------
@@ -190,7 +190,51 @@ Explains the data well while leaving out any unnecessary details.
 
 ------------------------------------------------------------------------
 
-### Approaches to estimating model parsimony {style="text-align: center"}
+### What is the goal ? {style="text-align: center"}
+
+Model selections path depend of your goals [@tredennick2021].
+
+![](img/modelsel.jpg){fig-align="center"}
+
+------------------------------------------------------------------------
+
+#### Exploration    {style="text-align: center"}
+
+#### What patterns exist in my data?  
+
+![](img/exploratory.png){fig-align="center"}
+
+Describe patterns in the data and generate hypotheses about nature.
+
+Proposed hypotheses should not be accepted until they are tested with independent data
+
+------------------------------------------------------------------------
+
+#### Prediction   {style="text-align: center"}
+
+#### Can I predict new observations? 
+
+![](img/map_predict.png){fig-align="center"}
+
+Looking for predictive accuracy
+
+*Prediction* is about 𝐲 (or the response variable)
+
+------------------------------------------------------------------------
+
+#### Inference  {style="text-align: center"}
+
+#### Does the evidence support my hypothesis?  
+
+![](img/inference.png){fig-align="center"}
+
+Evaluate the strength of evidence in a data set for some statement about nature
+
+*Inference* is about β 
+
+------------------------------------------------------------------------
+
+### Approaches to model selection {style="text-align: center"}
 
 ::::: columns
 ::: {.column style="text-align: center"}
@@ -428,6 +472,10 @@ testQuantiles(ht_mod1)
 One Cool thing about performance is that we can check all the assumptions at once with the `check_model(ht_mod1)`
 
 ```{r}
+#| fig-width: 10
+#| fig-height: 12
+#| fig-align: "center"
+#| 
 check_model(ht_mod1)
 ```
 
@@ -730,35 +778,35 @@ aic_mod4 <- glm(occupancy00 ~ PatchCon.stand,
 
 Try to fit the following models
 
--   ::::: columns
-    ::: {.column width="50%"}
-    -   Food, Cover
+- ::::: columns
+  ::: {.column width="50%"}
+  - Food, Cover
 
-    -   Food, Patch size
+  - Food, Patch size
 
-    -   Food, Patch connectivity
+  - Food, Patch connectivity
 
-    -   Cover, Patch size
+  - Cover, Patch size
 
-    -   Food, Cover, Patch size
+  - Food, Cover, Patch size
 
-    -   Food, Cover, Patch connectivity
-    :::
+  - Food, Cover, Patch connectivity
+  :::
 
-    ::: {.column width="50%"}
-    -   Food, Patch size, Patch connectivity
+  ::: {.column width="50%"}
+  - Food, Patch size, Patch connectivity
 
-    -   Food, Cover interaction
+  - Food, Cover interaction
 
-    -   Food, Patch size interaction
+  - Food, Patch size interaction
 
-    -   Food, Patch connectivity interaction
+  - Food, Patch connectivity interaction
 
-    -   Cover, Patch connectivity interaction
+  - Cover, Patch connectivity interaction
 
-    -   Constant only
-    :::
-    :::::
+  - Constant only
+  :::
+  :::::
 
 ------------------------------------------------------------------------
 
@@ -1024,14 +1072,6 @@ res_best <- simulateResiduals(best_models$`20`)
 
 plot(res_best)
 ```
-
-------------------------------------------------------------------------
-
-Different approaches give us slightly different models.
-
-Choose the approach based on your modeling objectives [@tredennick2021].
-
-![](img/modelsel.jpg){fig-align="center"}
 
 ------------------------------------------------------------------------
 
